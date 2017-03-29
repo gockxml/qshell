@@ -5,7 +5,7 @@ import (
 	"qshell"
 )
 
-type CliFunc func(cmd string, params ...string)
+type CliFunc func(cmd string, params ...string) int
 
 var accountS = qshell.Account{}
 var dircacheS = qshell.DirCache{}

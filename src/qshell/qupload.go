@@ -101,28 +101,28 @@ var upSettings = rio.Settings{
 	TryTimes:  7,
 }
 
-func QiniuUpload(threadCount int, uploadConfigFile string) {
+func QiniuUpload(threadCount int, uploadConfigFile string) int {
 	timeStart := time.Now()
 	fp, err := os.Open(uploadConfigFile)
 	if err != nil {
 		log.Error(fmt.Sprintf("Open upload config file `%s' error due to `%s'", uploadConfigFile, err))
-		return
+		return 1
 	}
 	defer fp.Close()
 	configData, err := ioutil.ReadAll(fp)
 	if err != nil {
 		log.Error(fmt.Sprintf("Read upload config file `%s' error due to `%s'", uploadConfigFile, err))
-		return
+		return 1
 	}
 	var uploadConfig UploadConfig
 	err = json.Unmarshal(configData, &uploadConfig)
 	if err != nil {
 		log.Error(fmt.Sprintf("Parse upload config file `%s' errror due to `%s'", uploadConfigFile, err))
-		return
+		return 1
 	}
 	if _, err := os.Stat(uploadConfig.SrcDir); err != nil {
 		log.Error("Upload config error for parameter `SrcDir`,", err)
-		return
+		return 1
 	}
 
 	//make SrcDir the full path
@@ -139,7 +139,7 @@ func QiniuUpload(threadCount int, uploadConfigFile string) {
 	err = os.MkdirAll(storePath, 0775)
 	if err != nil {
 		log.Error(fmt.Sprintf("Failed to mkdir `%s' due to `%s'", storePath, err))
-		return
+		return 1
 	}
 
 	//cache file
@@ -152,14 +152,14 @@ func QiniuUpload(threadCount int, uploadConfigFile string) {
 	ldb, err := leveldb.OpenFile(leveldbFileName, nil)
 	if err != nil {
 		log.Error(fmt.Sprintf("Open leveldb `%s' failed due to `%s'", leveldbFileName, err))
-		return
+		return 1
 	}
 	defer ldb.Close()
 	//sync
 	ufp, err := os.Open(cacheFileName)
 	if err != nil {
 		log.Error(fmt.Sprintf("Open cache file `%s' failed due to `%s'", cacheFileName, err))
-		return
+		return 1
 	}
 	defer ufp.Close()
 	bScanner := bufio.NewScanner(ufp)
@@ -315,7 +315,8 @@ func QiniuUpload(threadCount int, uploadConfigFile string) {
 		fstat, err := os.Stat(localFilePath)
 		if err != nil {
 			log.Error(fmt.Sprintf("Error stat local file `%s' due to `%s'", localFilePath, err))
-			continue
+			//continue
+			return 1
 		}
 
 		fsize := fstat.Size()
@@ -333,7 +334,8 @@ func QiniuUpload(threadCount int, uploadConfigFile string) {
 				if cErr != nil {
 					atomic.AddInt64(&failureFileCount, 1)
 					log.Error("Calc local file hash failed,", cErr)
-					continue
+					//continue
+					return 1
 				}
 				if rsEntry.Hash == localEtag {
 					atomic.AddInt64(&skippedFileCount, 1)
@@ -344,7 +346,8 @@ func QiniuUpload(threadCount int, uploadConfigFile string) {
 				if _, ok := checkErr.(*rpc.ErrorInfo); !ok {
 					//not logic error, should be network error
 					atomic.AddInt64(&failureFileCount, 1)
-					continue
+					//continue
+					return 1
 				}
 			}
 		} else {
@@ -403,6 +406,7 @@ func QiniuUpload(threadCount int, uploadConfigFile string) {
 					} else {
 						log.Error(fmt.Sprintf("Put file `%s' => `%s' failed due to `%s'", localFilePath, uploadFileKey, err))
 					}
+					os.Exit(1)
 				} else {
 					os.Remove(progressFpath)
 					atomic.AddInt64(&successFileCount, 1)
@@ -428,6 +432,7 @@ func QiniuUpload(threadCount int, uploadConfigFile string) {
 					} else {
 						log.Error(fmt.Sprintf("Put file `%s' => `%s' failed due to `%s'", localFilePath, uploadFileKey, err))
 					}
+					os.Exit(1)
 				} else {
 					atomic.AddInt64(&successFileCount, 1)
 					perr := ldb.Put([]byte(ldbKey), []byte(fmt.Sprintf("%d", localFlmd)), &ldbWOpt)
@@ -450,4 +455,5 @@ func QiniuUpload(threadCount int, uploadConfigFile string) {
 	fmt.Println("Duration:\t", time.Since(timeStart))
 	fmt.Println("-------------------------")
 
+	return 0
 }

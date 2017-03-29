@@ -12,51 +12,7 @@ import (
 var debugMode = false
 
 var supportedCmds = map[string]cli.CliFunc{
-	"account":       cli.Account,
-	"zone":          cli.Zone,
-	"dircache":      cli.DirCache,
-	"listbucket":    cli.ListBucket,
-	"alilistbucket": cli.AliListBucket,
-	"prefop":        cli.Prefop,
-	"stat":          cli.Stat,
-	"delete":        cli.Delete,
-	"move":          cli.Move,
-	"copy":          cli.Copy,
-	"chgm":          cli.Chgm,
-	"sync":          cli.Sync,
-	"fetch":         cli.Fetch,
-	"prefetch":      cli.Prefetch,
-	"batchstat":     cli.BatchStat,
-	"batchdelete":   cli.BatchDelete,
-	"batchchgm":     cli.BatchChgm,
-	"batchrename":   cli.BatchRename,
-	"batchcopy":     cli.BatchCopy,
-	"batchmove":     cli.BatchMove,
-	"batchrefresh":  cli.BatchRefresh,
-	"batchsign":     cli.BatchSign,
-	"checkqrsync":   cli.CheckQrsync,
-	"fput":          cli.FormPut,
-	"qupload":       cli.QiniuUpload,
-	"qdownload":     cli.QiniuDownload,
-	"rput":          cli.ResumablePut,
-	"b64encode":     cli.Base64Encode,
-	"b64decode":     cli.Base64Decode,
-	"urlencode":     cli.Urlencode,
-	"urldecode":     cli.Urldecode,
-	"ts2d":          cli.Timestamp2Date,
-	"tns2d":         cli.TimestampNano2Date,
-	"tms2d":         cli.TimestampMilli2Date,
-	"d2ts":          cli.Date2Timestamp,
-	"ip":            cli.IpQuery,
-	"qetag":         cli.Qetag,
-	"help":          cli.Help,
-	"unzip":         cli.Unzip,
-	"privateurl":    cli.PrivateUrl,
-	"saveas":        cli.Saveas,
-	"reqid":         cli.ReqId,
-	"m3u8delete":    cli.M3u8Delete,
-	"buckets":       cli.GetBuckets,
-	"domains":       cli.GetDomainsOfBucket,
+	"qupload": cli.QiniuUpload,
 }
 
 func main() {
@@ -100,7 +56,11 @@ func main() {
 		}
 
 		if cliFunc, ok := supportedCmds[cmd]; ok {
-			cliFunc(cmd, params...)
+			r := cliFunc(cmd, params...)
+			if r == 1 {
+				fmt.Println(fmt.Sprintf("exit code %d", r))
+				os.Exit(r)
+			}
 		} else {
 			fmt.Println(fmt.Sprintf("Error: unknown cmd `%s'", cmd))
 		}

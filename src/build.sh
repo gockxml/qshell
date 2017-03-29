@@ -1,2 +1,2 @@
-export GOPATH=$GOPATH:/Users/jemy/QiniuCloud/Projects/qshell
+export GOPATH=$GOPATH:/Users/gock/github/qshell
 go build main.go

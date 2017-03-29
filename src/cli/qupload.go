@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-func QiniuUpload(cmd string, params ...string) {
+func QiniuUpload(cmd string, params ...string) int {
 	if len(params) == 1 || len(params) == 2 {
 		var uploadConfigFile string
 		var threadCount int64
@@ -16,7 +16,7 @@ func QiniuUpload(cmd string, params ...string) {
 			threadCount, err = strconv.ParseInt(params[0], 10, 64)
 			if err != nil {
 				log.Error("Invalid <ThreadCount> value,", params[0])
-				return
+				return 1
 			}
 			uploadConfigFile = params[1]
 		} else {
@@ -27,8 +27,9 @@ func QiniuUpload(cmd string, params ...string) {
 			fmt.Println("You can set <ThreadCount> value between 1 and 100 to improve speed")
 			threadCount = qshell.MIN_UPLOAD_THREAD_COUNT
 		}
-		qshell.QiniuUpload(int(threadCount), uploadConfigFile)
+		return qshell.QiniuUpload(int(threadCount), uploadConfigFile)
 	} else {
 		CmdHelp(cmd)
 	}
+	return 0
 }
